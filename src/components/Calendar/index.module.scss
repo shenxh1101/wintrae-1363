@@ -1,0 +1,104 @@
+@use '@/styles/variables.scss' as *;
+
+.calendar {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.calendarHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-lg;
+}
+
+.navBtn {
+  font-size: $font-size-xl;
+  color: $color-primary;
+  padding: $spacing-sm $spacing-md;
+  font-weight: $font-weight-bold;
+}
+
+.monthTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.weekDayRow {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: $spacing-md;
+}
+
+.weekDay {
+  flex: 1;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+  padding: $spacing-sm 0;
+}
+
+.daysGrid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.dayCell {
+  width: calc(100% / 7);
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all $transition-fast;
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.otherMonth {
+    opacity: 0.3;
+  }
+
+  &.today {
+    .dayNumber {
+      color: $color-primary;
+      font-weight: $font-weight-bold;
+    }
+  }
+
+  &.selected {
+    background: $color-primary;
+    border-radius: $radius-md;
+
+    .dayNumber {
+      color: $color-text-white;
+    }
+  }
+}
+
+.dayNumber {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.indicators {
+  display: flex;
+  flex-direction: row;
+  gap: 4rpx;
+  margin-top: 4rpx;
+}
+
+.indicator {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+}

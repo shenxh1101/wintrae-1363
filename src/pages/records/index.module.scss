@@ -1,0 +1,102 @@
+@use '@/styles/variables.scss' as *;
+
+.recordsPage {
+  min-height: 100vh;
+  padding-bottom: 120rpx;
+}
+
+.header {
+  padding: $spacing-lg $page-padding;
+  background: $color-bg-card;
+  margin-bottom: $spacing-md;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: row;
+  background: $color-bg-page;
+  border-radius: $radius-button;
+  padding: 6rpx;
+  margin-bottom: $spacing-md;
+}
+
+.tabItem {
+  flex: 1;
+  text-align: center;
+  padding: $spacing-sm 0;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.plantFilter {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-sm;
+  overflow-x: auto;
+  padding-bottom: $spacing-xs;
+}
+
+.plantChip {
+  @include scroll-x-item(auto);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8rpx $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  white-space: nowrap;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+  }
+}
+
+.plantChipAvatar {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  margin-right: $spacing-xs;
+}
+
+.content {
+  padding: 0 $page-padding;
+}
+
+.addFab {
+  @include button-reset;
+  position: fixed;
+  right: $page-padding;
+  bottom: 140rpx;
+  width: 104rpx;
+  height: 104rpx;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  border-radius: 50%;
+  box-shadow: $shadow-float;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+}
+
+.addIcon {
+  font-size: 48rpx;
+  color: $color-text-white;
+  font-weight: $font-weight-bold;
+}

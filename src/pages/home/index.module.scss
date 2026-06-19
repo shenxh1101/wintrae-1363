@@ -1,0 +1,216 @@
+@use '@/styles/variables.scss' as *;
+
+.homePage {
+  min-height: 100vh;
+  padding-bottom: 120rpx;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  padding: $spacing-xl $page-padding $spacing-xl;
+  border-radius: 0 0 $radius-xl $radius-xl;
+}
+
+.greeting {
+  color: $color-text-white;
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-xs;
+}
+
+.subGreeting {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: $font-size-md;
+  margin-bottom: $spacing-lg;
+}
+
+.todayStats {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-md;
+}
+
+.statItem {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10rpx);
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  flex: 1;
+}
+
+.statNumber {
+  color: $color-text-white;
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.statLabel {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: $font-size-sm;
+}
+
+.content {
+  padding: $spacing-lg $page-padding;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.seeAll {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.quickActions {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.actionBtn {
+  @include button-reset;
+  flex: 1;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg $spacing-md;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+}
+
+.actionIcon {
+  font-size: 56rpx;
+  margin-bottom: $spacing-sm;
+}
+
+.actionText {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.section {
+  margin-bottom: $spacing-lg;
+}
+
+.alertCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  border-left: 6rpx solid $color-warning;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.alertCard.danger {
+  border-left-color: $color-error;
+}
+
+.alertIcon {
+  font-size: 48rpx;
+  margin-right: $spacing-md;
+}
+
+.alertContent {
+  flex: 1;
+}
+
+.alertTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.alertDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.tasksList {
+  margin-bottom: $spacing-lg;
+}
+
+.plantsGrid {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-md;
+  overflow-x: auto;
+  padding-bottom: $spacing-sm;
+}
+
+.plantMiniCard {
+  @include scroll-x-item(240rpx);
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  box-shadow: $shadow-card;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.plantMiniAvatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: $radius-round;
+  margin-bottom: $spacing-sm;
+}
+
+.plantMiniName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+  @include text-ellipsis;
+  max-width: 200rpx;
+  text-align: center;
+}
+
+.plantMiniStatus {
+  font-size: $font-size-xs;
+  padding: 2rpx 10rpx;
+  border-radius: $radius-xs;
+}
+
+.statusGood {
+  background: #ECFDF5;
+  color: $color-success;
+}
+
+.statusWarning {
+  background: #FFFBEB;
+  color: $color-warning;
+}
+
+.statusDanger {
+  background: #FEF2F2;
+  color: $color-error;
+}
