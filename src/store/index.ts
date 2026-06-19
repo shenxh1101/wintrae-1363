@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import Taro from '@tarojs/taro';
-import { Plant, Task, Record, TaskType, WeeklyStats } from '@/types';
+import { Plant, Task, Record, TaskType, WeeklyStats, WeeklyReview } from '@/types';
 import { mockPlants, mockPlantLibrary } from '@/data/plants';
 import { mockTasks } from '@/data/tasks';
 import { mockRecords } from '@/data/records';
-import { formatDate, getWeekDays, isToday } from '@/utils/date';
+import { formatDate, getWeekDays, isToday, getPreviousWeekRange, getDaysDiff } from '@/utils/date';
 
 const STORAGE_KEY = 'gardening_app_data_v1';
 const IMAGE_STORAGE_PREFIX = 'gardening_image_';
@@ -25,6 +25,7 @@ interface AppState {
   setTasks: (tasks: Task[]) => void;
   addTask: (task: Omit<Task, 'id' | 'completed'>) => void;
   completeTask: (taskId: string) => void;
+  completeTasksBatch: (taskIds: string[]) => void;
   uncompleteTask: (taskId: string) => void;
   deleteTask: (taskId: string) => void;
   setRecords: (records: Record[]) => void;
@@ -38,6 +39,7 @@ interface AppState {
   getOverdueTasks: () => Task[];
   getUrgentTasks: () => Task[];
   getWeeklyStats: () => WeeklyStats;
+  getWeeklyReview: (weeksAgo: number) => WeeklyReview;
   getPlantById: (id: string) => Plant | undefined;
   getTasksByPlant: (plantId: string) => Task[];
   getRecordsByPlant: (plantId: string) => Record[];
@@ -45,6 +47,11 @@ interface AppState {
   isTaskDue: (task: Task) => boolean;
   isTaskOverdue: (task: Task) => boolean;
   generateCareList: (plantId?: string) => string;
+  generateAssignmentList: (options: {
+    plantIds?: string[];
+    taskTypes?: TaskType[];
+    assignees: Record<string, string>;
+  }) => string;
   resetAllData: () => void;
 }
 
@@ -250,6 +257,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     get().persistToStorage();
     console.log('[Store] Task completed:', taskId);
   },
+  completeTasksBatch: (taskIds) => {
+    if (taskIds.length === 0) return;
+    const now = formatDate(new Date(), 'YYYY-MM-DD HH:mm');
+    set((state) => ({
+      tasks: state.tasks.map((t) =>
+        taskIds.includes(t.id)
+          ? { ...t, completed: true, completedAt: now }
+          : t
+      )
+    }));
+    get().persistToStorage();
+    console.log('[Store] Batch completed tasks:', taskIds.length);
+  },
   uncompleteTask: (taskId) => {
     set((state) => ({
       tasks: state.tasks.map((t) =>
@@ -363,6 +383,91 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
   },
 
+  getWeeklyReview: (weeksAgo) => {
+    const { start, end } = getPreviousWeekRange(weeksAgo);
+    const weekStart = formatDate(start);
+    const weekEnd = formatDate(end);
+    const weekTasks = get().tasks.filter((t) => t.date >= weekStart && t.date <= weekEnd);
+
+    const typeStats: Record<TaskType, { total: number; completed: number; overdue: number; delayDays: number }> = {
+      water: { total: 0, completed: 0, overdue: 0, delayDays: 0 },
+      fertilize: { total: 0, completed: 0, overdue: 0, delayDays: 0 },
+      prune: { total: 0, completed: 0, overdue: 0, delayDays: 0 },
+      pest: { total: 0, completed: 0, overdue: 0, delayDays: 0 }
+    };
+
+    let totalOverdue = 0;
+    let totalDelayDays = 0;
+    let delayedTaskCount = 0;
+
+    weekTasks.forEach((t) => {
+      typeStats[t.type].total++;
+      if (t.completed) {
+        typeStats[t.type].completed++;
+        if (t.completedAt) {
+          const taskDate = new Date(`${t.date}T${t.time}:00`);
+          const completedDate = new Date(t.completedAt);
+          if (completedDate > taskDate) {
+            const delay = getDaysDiff(taskDate, completedDate);
+            typeStats[t.type].delayDays += delay;
+            totalDelayDays += delay;
+            delayedTaskCount++;
+          }
+        }
+      } else if (checkTaskOverdue(t)) {
+        typeStats[t.type].overdue++;
+        totalOverdue++;
+        const taskDate = new Date(`${t.date}T${t.time}:00`);
+        const delay = getDaysDiff(taskDate, new Date());
+        typeStats[t.type].delayDays += delay;
+        totalDelayDays += delay;
+        delayedTaskCount++;
+      }
+    });
+
+    const totalTasks = weekTasks.length;
+    const completedTasks = weekTasks.filter((t) => t.completed).length;
+
+    let mostDelayedType: TaskType | null = null;
+    let maxDelayScore = -1;
+    (Object.keys(typeStats) as TaskType[]).forEach((type) => {
+      const stats = typeStats[type];
+      if (stats.total > 0) {
+        const delayScore = stats.overdue + (stats.delayDays > 0 ? 1 : 0);
+        if (delayScore > maxDelayScore) {
+          maxDelayScore = delayScore;
+          mostDelayedType = type;
+        }
+      }
+    });
+
+    const tasksByTypeResult: Record<TaskType, { total: number; completed: number; overdue: number }> = {
+      water: { total: typeStats.water.total, completed: typeStats.water.completed, overdue: typeStats.water.overdue },
+      fertilize: { total: typeStats.fertilize.total, completed: typeStats.fertilize.completed, overdue: typeStats.fertilize.overdue },
+      prune: { total: typeStats.prune.total, completed: typeStats.prune.completed, overdue: typeStats.prune.overdue },
+      pest: { total: typeStats.pest.total, completed: typeStats.pest.completed, overdue: typeStats.pest.overdue }
+    };
+
+    const startStr = formatDate(start, 'MM/DD');
+    const endStr = formatDate(end, 'MM/DD');
+    let weekLabel = `${startStr} - ${endStr}`;
+    if (weeksAgo === 0) weekLabel += ' (本周)';
+    else if (weeksAgo === 1) weekLabel += ' (上周)';
+
+    return {
+      weekStart,
+      weekEnd,
+      weekLabel,
+      totalTasks,
+      completedTasks,
+      completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+      overdueCount: totalOverdue,
+      tasksByType: tasksByTypeResult,
+      mostDelayedType,
+      avgDelayDays: delayedTaskCount > 0 ? Math.round((totalDelayDays / delayedTaskCount) * 10) / 10 : 0
+    };
+  },
+
   getPlantById: (id) => {
     return get().plants.find((p) => p.id === id);
   },
@@ -471,6 +576,83 @@ export const useAppStore = create<AppState>((set, get) => ({
     lines.push(`  待办任务：${totalPending} 项`);
     lines.push(`  已完成：${totalCompleted} 项`);
     lines.push(`  生长记录：${totalRecords} 条`);
+
+    return lines.join('\n');
+  },
+
+  generateAssignmentList: (options) => {
+    const { plantIds, taskTypes, assignees } = options;
+    const { plants, getTasksByPlant, isTaskDue, isTaskOverdue } = get();
+    const lines: string[] = [];
+
+    const now = formatDate(new Date(), 'YYYY-MM-DD HH:mm');
+    lines.push('📋 家庭园艺养护分工单');
+    lines.push(`生成时间：${now}`);
+    lines.push('═'.repeat(30));
+    lines.push('');
+
+    const plantList = plantIds && plantIds.length > 0
+      ? plants.filter(p => plantIds.includes(p.id))
+      : plants;
+
+    const typeFilter = taskTypes && taskTypes.length > 0
+      ? (t: Task) => taskTypes.includes(t.type)
+      : () => true;
+
+    let totalAssigned = 0;
+    let totalCompleted = 0;
+    const assigneeStats: Record<string, { count: number; completed: number }> = {};
+
+    plantList.forEach((plant, plantIdx) => {
+      const plantTasks = getTasksByPlant(plant.id)
+        .filter(t => !t.completed)
+        .filter(typeFilter)
+        .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+
+      if (plantTasks.length === 0) return;
+
+      if (plantIdx > 0) lines.push('');
+      lines.push(`【${plant.name}】${plant.species}`);
+      lines.push(`  📍 位置：${plant.location}`);
+      lines.push('');
+
+      plantTasks.forEach((task, taskIdx) => {
+        const defaultAssignee = assignees['_default'] || '待分配';
+        const assignee = assignees[task.id] || assignees[plant.id] || defaultAssignee;
+
+        if (!assigneeStats[assignee]) {
+          assigneeStats[assignee] = { count: 0, completed: 0 };
+        }
+        assigneeStats[assignee].count++;
+        totalAssigned++;
+
+        const typeMap: Record<TaskType, string> = { water: '浇水', fertilize: '施肥', prune: '修剪', pest: '驱虫' };
+        const typeIcon = task.type === 'water' ? '💧' : task.type === 'fertilize' ? '🌱' : task.type === 'prune' ? '✂️' : '🐛';
+        const statusMark = task.completed ? '✅' : isTaskOverdue(task) ? '❗️' : isTaskDue(task) ? '⏰' : '⬜️';
+        const statusText = task.completed ? '已完成' : isTaskOverdue(task) ? '已逾期' : isTaskDue(task) ? '今日到期' : '待处理';
+
+        lines.push(`${statusMark} ${taskIdx + 1}. ${typeIcon} ${typeMap[task.type]}`);
+        lines.push(`     📅 日期：${task.date} ${task.time}`);
+        lines.push(`     👤 负责人：${assignee}`);
+        lines.push(`     📊 状态：${statusText}`);
+        if (task.notes) {
+          lines.push(`     📝 备注：${task.notes}`);
+        }
+        lines.push('');
+      });
+    });
+
+    lines.push('═'.repeat(30));
+    lines.push('📊 分工统计：');
+    lines.push(`  总任务数：${totalAssigned} 项`);
+    lines.push('');
+    lines.push('  负责人分配：');
+    Object.entries(assigneeStats).forEach(([name, stats]) => {
+      lines.push(`    • ${name}：${stats.count} 项`);
+    });
+    lines.push('');
+    lines.push('💡 完成任务后请在 App 中标记「完成」，');
+    lines.push('   数据会自动同步给所有家人！');
 
     return lines.join('\n');
   },

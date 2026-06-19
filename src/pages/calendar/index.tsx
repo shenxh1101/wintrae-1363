@@ -14,10 +14,13 @@ const CalendarPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [filterType, setFilterType] = useState<TaskType | 'all'>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
 
   const tasks = useAppStore((state) => state.tasks);
   const getTasksByDate = useAppStore((state) => state.getTasksByDate);
   const completeTask = useAppStore((state) => state.completeTask);
+  const completeTasksBatch = useAppStore((state) => state.completeTasksBatch);
   const isTaskDue = useAppStore((state) => state.isTaskDue);
   const isTaskOverdue = useAppStore((state) => state.isTaskOverdue);
   const hydrateFromStorage = useAppStore((state) => state.hydrateFromStorage);
@@ -56,6 +59,14 @@ const CalendarPage: React.FC = () => {
     };
   }, [filteredTasks, isTaskDue, isTaskOverdue]);
 
+  const incompleteTasks = useMemo(() => {
+    return [...overdueTasks, ...dueTasks, ...pendingTasks];
+  }, [overdueTasks, dueTasks, pendingTasks]);
+
+  const allIncompleteSelected = useMemo(() => {
+    return incompleteTasks.length > 0 && incompleteTasks.every(t => selectedTaskIds.includes(t.id));
+  }, [incompleteTasks, selectedTaskIds]);
+
   const onRefresh = () => {
     setRefreshing(true);
     hydrateFromStorage();
@@ -67,6 +78,7 @@ const CalendarPage: React.FC = () => {
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
+    setSelectedTaskIds([]);
   };
 
   const handleAddTask = () => {
@@ -80,10 +92,60 @@ const CalendarPage: React.FC = () => {
     Taro.showToast({ title: '任务完成', icon: 'success' });
   };
 
+  const toggleTaskSelection = (taskId: string) => {
+    setSelectedTaskIds(prev => 
+      prev.includes(taskId)
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (allIncompleteSelected) {
+      setSelectedTaskIds([]);
+    } else {
+      setSelectedTaskIds(incompleteTasks.map(t => t.id));
+    }
+  };
+
+  const handleBatchComplete = () => {
+    if (selectedTaskIds.length === 0) return;
+    
+    Taro.showModal({
+      title: '确认批量完成',
+      content: `确定要将选中的 ${selectedTaskIds.length} 项任务标记为完成吗？`,
+      confirmText: '确认完成',
+      confirmColor: '#10B981',
+      success: (res) => {
+        if (res.confirm) {
+          completeTasksBatch(selectedTaskIds);
+          Taro.showToast({ 
+            title: `已完成 ${selectedTaskIds.length} 项任务`, 
+            icon: 'success' 
+          });
+          setSelectedTaskIds([]);
+          setBatchMode(false);
+        }
+      }
+    });
+  };
+
+  const toggleBatchMode = () => {
+    setBatchMode(!batchMode);
+    setSelectedTaskIds([]);
+  };
+
   const pendingCount = dayTasks.filter(t => !t.completed).length;
   const completedCount = dayTasks.filter(t => t.completed).length;
   const overdueCount = dayTasks.filter(t => !t.completed && isTaskOverdue(t)).length;
   const dueCount = dayTasks.filter(t => !t.completed && !isTaskOverdue(t) && isTaskDue(t)).length;
+
+  const typeIcons: Record<TaskType, string> = {
+    water: '💧',
+    fertilize: '🌱',
+    prune: '✂️',
+    pest: '🐛'
+  };
 
   const renderTaskGroup = (title: string, tasks: Task[], variant: 'overdue' | 'due' | 'pending' | 'completed') => {
     if (tasks.length === 0) return null;
@@ -119,6 +181,67 @@ const CalendarPage: React.FC = () => {
             showDate={false}
           />
         ))}
+      </View>
+    );
+  };
+
+  const renderBatchTask = (task: Task) => {
+    const isSelected = selectedTaskIds.includes(task.id);
+    const isCompleted = task.completed;
+
+    let status: 'overdue' | 'due' | 'pending' | 'completed' = 'pending';
+    if (isCompleted) status = 'completed';
+    else if (isTaskOverdue(task)) status = 'overdue';
+    else if (isTaskDue(task)) status = 'due';
+
+    const statusLabels: Record<string, string> = {
+      overdue: '已逾期',
+      due: '已到期',
+      pending: '待处理',
+      completed: '已完成'
+    };
+
+    return (
+      <View
+        key={task.id}
+        className={classnames(
+          styles.batchTaskCard,
+          isSelected && styles.selected,
+          isCompleted && styles.disabled
+        )}
+        onClick={() => !isCompleted && toggleTaskSelection(task.id)}
+      >
+        <View className={styles.batchCheckbox}>
+          {isSelected && '✓'}
+        </View>
+        <View className={styles.batchTaskContent}>
+          <View className={styles.batchTaskHeader}>
+            <Text className={styles.batchTaskTitle}>
+              <Text className={styles.batchTaskTypeIcon}>{typeIcons[task.type]}</Text>
+              {TaskTypeLabel[task.type]}
+            </Text>
+            <Text className={classnames(
+              styles.batchTaskStatus,
+              status === 'overdue' && styles.statusOverdue,
+              status === 'due' && styles.statusDue,
+              status === 'pending' && styles.statusPending,
+              status === 'completed' && styles.statusCompleted
+            )}>
+              {statusLabels[status]}
+            </Text>
+          </View>
+          <View className={styles.batchTaskMeta}>
+            <Text className={styles.batchTaskPlant}>
+              🪴 {task.plantName}
+            </Text>
+            <Text className={styles.batchTaskTime}>
+              🕐 {task.time}
+            </Text>
+            {task.notes && (
+              <Text>📝 {task.notes}</Text>
+            )}
+          </View>
+        </View>
       </View>
     );
   };
@@ -209,10 +332,42 @@ const CalendarPage: React.FC = () => {
       <View className={styles.tasksSection}>
         <View className={styles.tasksTitle}>
           <Text>当天任务</Text>
-          <Button className={styles.addTaskBtn} onClick={handleAddTask}>
-            + 添加任务
-          </Button>
+          <View style={{ display: 'flex', flexDirection: 'row', gap: '16rpx' }}>
+            {pendingCount > 0 && (
+              <Button 
+                className={classnames(styles.batchModeBtn, batchMode && styles.active)} 
+                onClick={toggleBatchMode}
+              >
+                {batchMode ? '取消批量' : '☑️ 批量处理'}
+              </Button>
+            )}
+            <Button className={styles.addTaskBtn} onClick={handleAddTask}>
+              + 添加任务
+            </Button>
+          </View>
         </View>
+
+        {batchMode && (
+          <View className={styles.batchActionBar}>
+            <View className={styles.batchActionsLeft}>
+              <Text className={styles.batchSelectedInfo}>
+                已选择 <Text>{selectedTaskIds.length}</Text> / {incompleteTasks.length} 项
+              </Text>
+            </View>
+            <View className={styles.batchActionsRight}>
+              <Button className={styles.selectAllBtn} onClick={toggleSelectAll}>
+                {allIncompleteSelected ? '取消全选' : '全选'}
+              </Button>
+              <Button 
+                className={styles.batchCompleteBtn} 
+                onClick={handleBatchComplete}
+                disabled={selectedTaskIds.length === 0}
+              >
+                ✅ 批量完成
+              </Button>
+            </View>
+          </View>
+        )}
 
         {!hasAnyTask ? (
           <EmptyState
@@ -222,6 +377,31 @@ const CalendarPage: React.FC = () => {
             actionText="添加任务"
             onAction={handleAddTask}
           />
+        ) : batchMode ? (
+          <View>
+            {incompleteTasks.length > 0 && (
+              <View>
+                <View className={classnames(styles.taskGroupHeader, styles.groupPending)}>
+                  <Text className={styles.taskGroupTitle}>待处理任务</Text>
+                  <View className={styles.taskGroupCount}>
+                    {incompleteTasks.length}
+                  </View>
+                </View>
+                {incompleteTasks.map(task => renderBatchTask(task))}
+              </View>
+            )}
+            {completedTasks.length > 0 && (
+              <View>
+                <View className={classnames(styles.taskGroupHeader, styles.groupCompleted)}>
+                  <Text className={styles.taskGroupTitle}>✅ 已完成任务</Text>
+                  <View className={classnames(styles.taskGroupCount, styles.countCompleted)}>
+                    {completedTasks.length}
+                  </View>
+                </View>
+                {completedTasks.map(task => renderBatchTask(task))}
+              </View>
+            )}
+          </View>
         ) : (
           <View>
             {renderTaskGroup('已逾期', overdueTasks, 'overdue')}

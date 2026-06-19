@@ -259,3 +259,201 @@
   background: #A7F3D0;
   color: #047857;
 }
+
+.batchActionBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: $color-bg-card;
+  padding: $spacing-md $page-padding;
+  margin-bottom: $spacing-md;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.batchActionsLeft {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.batchModeBtn {
+  @include button-reset;
+  padding: $spacing-sm $spacing-md;
+  background: #F3F4F6;
+  color: $color-text-secondary;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+  }
+}
+
+.batchSelectedInfo {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+
+  Text {
+    font-weight: $font-weight-semibold;
+    color: $color-primary;
+  }
+}
+
+.batchActionsRight {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-sm;
+}
+
+.selectAllBtn {
+  @include button-reset;
+  padding: $spacing-sm $spacing-md;
+  background: #DBEAFE;
+  color: #2563EB;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.batchCompleteBtn {
+  @include button-reset;
+  padding: $spacing-sm $spacing-md;
+  background: linear-gradient(90deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.batchTaskCard {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-sm;
+  box-shadow: $shadow-card;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &.selected {
+    border-color: $color-primary;
+    background: rgba(16, 185, 129, 0.05);
+  }
+
+  &.disabled {
+    opacity: 0.5;
+  }
+}
+
+.batchCheckbox {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: $radius-xs;
+  border: 2rpx solid #D1D5DB;
+  margin-right: $spacing-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: transparent;
+
+  .selected & {
+    background: $color-primary;
+    border-color: $color-primary;
+    color: #fff;
+  }
+}
+
+.batchTaskContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.batchTaskHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.batchTaskTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.batchTaskTypeIcon {
+  font-size: $font-size-md;
+}
+
+.batchTaskStatus {
+  font-size: $font-size-xs;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  font-weight: $font-weight-medium;
+
+  &.statusOverdue {
+    background: #FEE2E2;
+    color: #DC2626;
+  }
+
+  &.statusDue {
+    background: #FEF3C7;
+    color: #D97706;
+  }
+
+  &.statusPending {
+    background: #F3F4F6;
+    color: #6B7280;
+  }
+
+  &.statusCompleted {
+    background: #ECFDF5;
+    color: #059669;
+  }
+}
+
+.batchTaskMeta {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.batchTaskPlant {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.batchTaskTime {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+}

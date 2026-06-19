@@ -541,3 +541,389 @@
     background: #9CA3AF;
   }
 }
+
+.weekSelector {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  overflow-x: auto;
+  padding-bottom: $spacing-xs;
+}
+
+.weekChip {
+  @include scroll-x-item(auto);
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  white-space: nowrap;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-primary;
+    color: $color-text-white;
+  }
+}
+
+.reviewSection {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-lg;
+}
+
+.reviewHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-lg;
+}
+
+.reviewTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.reviewWeekLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.reviewStatsRow {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.reviewStatCard {
+  flex: 1;
+  padding: $spacing-md;
+  border-radius: $radius-md;
+  text-align: center;
+
+  &.statSuccess {
+    background: #ECFDF5;
+  }
+
+  &.statWarning {
+    background: #FEF3C7;
+  }
+
+  &.statDanger {
+    background: #FEE2E2;
+  }
+
+  &.statInfo {
+    background: #DBEAFE;
+  }
+}
+
+.reviewStatValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.reviewStatLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.statSuccess .reviewStatValue { color: #059669; }
+.statWarning .reviewStatValue { color: #D97706; }
+.statDanger .reviewStatValue { color: #DC2626; }
+.statInfo .reviewStatValue { color: #2563EB; }
+
+.delayedTypeCard {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.delayedTypeIcon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-md;
+  background: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  margin-right: $spacing-md;
+}
+
+.delayedTypeInfo {
+  flex: 1;
+}
+
+.delayedTypeLabel {
+  font-size: $font-size-xs;
+  color: #92400E;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.delayedTypeName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: #78350F;
+}
+
+.reviewTypeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-sm;
+}
+
+.reviewTypeItem {
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.reviewTypeHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.reviewTypeIcon {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: $spacing-sm;
+  font-size: 24rpx;
+}
+
+.reviewTypeName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.reviewTypeStats {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-size: $font-size-xs;
+}
+
+.reviewTypeStat {
+  text-align: center;
+  flex: 1;
+}
+
+.reviewTypeStatNum {
+  font-weight: $font-weight-bold;
+  display: block;
+  font-size: $font-size-md;
+}
+
+.reviewTypeStatLabel {
+  color: $color-text-secondary;
+  font-size: $font-size-xs;
+}
+
+.statNumGreen { color: #059669; }
+.statNumRed { color: #DC2626; }
+.statNumBlue { color: #2563EB; }
+
+.tabs {
+  display: flex;
+  flex-direction: row;
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  padding: 8rpx;
+  margin-bottom: $spacing-lg;
+}
+
+.tabItem {
+  flex: 1;
+  padding: $spacing-sm;
+  text-align: center;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-bg-card;
+    color: $color-primary;
+    box-shadow: $shadow-card;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.assignmentModalSection {
+  margin-bottom: $spacing-lg;
+}
+
+.assignmentSectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.checkboxGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.checkboxItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &.checked {
+    border-color: $color-primary;
+    background: rgba(16, 185, 129, 0.05);
+  }
+}
+
+.checkboxBox {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: $radius-xs;
+  border: 2rpx solid #D1D5DB;
+  margin-right: $spacing-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .checked & {
+    background: $color-primary;
+    border-color: $color-primary;
+    color: #fff;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-bold;
+  }
+}
+
+.checkboxContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.checkboxLabel {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  display: block;
+}
+
+.checkboxSubLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.assigneeInput {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-sm;
+}
+
+.assigneeLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-right: $spacing-md;
+  min-width: 120rpx;
+}
+
+.assigneeInputField {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.quickAssignees {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-top: $spacing-sm;
+}
+
+.quickAssigneeChip {
+  padding: $spacing-xs $spacing-sm;
+  background: $color-bg-card;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  border: 2rpx solid $color-divider;
+
+  &:active {
+    background: $color-primary;
+    color: #fff;
+    border-color: $color-primary;
+  }
+}
+
+.generateBtn {
+  @include button-reset;
+  width: 100%;
+  background: linear-gradient(90deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  padding: $spacing-md;
+  border-radius: $radius-lg;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  margin-top: $spacing-md;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    transform: none;
+  }
+}
+
+.selectAllRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.selectAllBtn {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  background: transparent;
+  border: none;
+  padding: 0;
+}

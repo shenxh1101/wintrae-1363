@@ -58,6 +58,19 @@ export interface WeeklyStats {
   tasksByType: Record<TaskType, number>;
 }
 
+export interface WeeklyReview {
+  weekStart: string;
+  weekEnd: string;
+  weekLabel: string;
+  totalTasks: number;
+  completedTasks: number;
+  completionRate: number;
+  overdueCount: number;
+  tasksByType: Record<TaskType, { total: number; completed: number; overdue: number }>;
+  mostDelayedType: TaskType | null;
+  avgDelayDays: number;
+}
+
 export const TaskTypeLabel: Record<TaskType, string> = {
   water: '浇水',
   fertilize: '施肥',
