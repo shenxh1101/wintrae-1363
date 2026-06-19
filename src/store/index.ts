@@ -7,6 +7,7 @@ import { mockRecords } from '@/data/records';
 import { formatDate, getWeekDays, isToday } from '@/utils/date';
 
 const STORAGE_KEY = 'gardening_app_data_v1';
+const IMAGE_STORAGE_PREFIX = 'gardening_image_';
 
 interface AppState {
   plants: Plant[];
@@ -18,6 +19,7 @@ interface AppState {
   isInitialized: boolean;
   hydrateFromStorage: () => void;
   persistToStorage: () => void;
+  saveImagePermanently: (tempPath: string) => Promise<string>;
   setPlants: (plants: Plant[]) => void;
   addPlant: (plant: Omit<Plant, 'id' | 'createdAt' | 'healthStatus'>) => void;
   setTasks: (tasks: Task[]) => void;
@@ -34,6 +36,7 @@ interface AppState {
   getCompletedTasks: () => Task[];
   getDueTasks: () => Task[];
   getOverdueTasks: () => Task[];
+  getUrgentTasks: () => Task[];
   getWeeklyStats: () => WeeklyStats;
   getPlantById: (id: string) => Plant | undefined;
   getTasksByPlant: (plantId: string) => Task[];
@@ -72,6 +75,86 @@ const loadFromStorage = (): { plants?: Plant[]; tasks?: Task[]; records?: Record
   } catch (e) {
     console.error('[Storage] Failed to load:', e);
     return null;
+  }
+};
+
+const saveImageToPermanentStorage = async (tempPath: string): Promise<string> => {
+  try {
+    if (tempPath.startsWith('http') || tempPath.startsWith('data:')) {
+      console.log('[Image] Already permanent URL or base64:', tempPath.substring(0, 50));
+      return tempPath;
+    }
+
+    const isH5 = typeof window !== 'undefined';
+    
+    if (isH5) {
+      console.log('[Image] H5 environment, converting to base64 for permanent storage');
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              resolve(tempPath);
+              return;
+            }
+            ctx.drawImage(img, 0, 0);
+            const base64 = canvas.toDataURL('image/jpeg', 0.8);
+            const imageKey = `${IMAGE_STORAGE_PREFIX}${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            try {
+              Taro.setStorageSync(imageKey, base64);
+              console.log('[Image] Saved to H5 localStorage with key:', imageKey, 'size:', Math.round(base64.length / 1024), 'KB');
+            } catch (e) {
+              console.warn('[Image] Storage quota exceeded, using data URL directly');
+            }
+            resolve(base64);
+          } catch (e) {
+            console.warn('[Image] Canvas conversion failed, using temp path:', e);
+            resolve(tempPath);
+          }
+        };
+        img.onerror = () => {
+          console.warn('[Image] Image load failed, using temp path');
+          resolve(tempPath);
+        };
+        img.src = tempPath;
+      });
+    } else {
+      console.log('[Image] Mini-program environment, using Taro.saveFile');
+      try {
+        const fs = Taro.getFileSystemManager();
+        const savedFilePath = await new Promise<string>((resolve, reject) => {
+          fs.saveFile({
+            tempFilePath: tempPath,
+            success: (res) => resolve(res.savedFilePath),
+            fail: (err) => {
+              console.warn('[Image] saveFile failed, trying copyFile:', err);
+              fs.copyFile({
+                srcPath: tempPath,
+                destPath: `${Taro.env.USER_DATA_PATH}/img_${Date.now()}.jpg`,
+                success: (res) => resolve(res.destPath || tempPath),
+                fail: (err2) => {
+                  console.warn('[Image] copyFile also failed, using temp path:', err2);
+                  resolve(tempPath);
+                }
+              });
+            }
+          });
+        });
+        console.log('[Image] Saved to mini-program permanent storage:', savedFilePath);
+        return savedFilePath;
+      } catch (e) {
+        console.warn('[Image] Mini-program file save failed, using temp path:', e);
+        return tempPath;
+      }
+    }
+  } catch (e) {
+    console.error('[Image] Permanent save failed:', e);
+    return tempPath;
   }
 };
 
@@ -120,6 +203,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   persistToStorage: () => {
     const { plants, tasks, records } = get();
     saveToStorage(plants, tasks, records);
+  },
+
+  saveImagePermanently: async (tempPath: string) => {
+    return await saveImageToPermanentStorage(tempPath);
   },
 
   setPlants: (plants) => {
@@ -222,7 +309,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   getDueTasks: () => {
     return get().tasks
-      .filter((t) => checkTaskDue(t))
+      .filter((t) => checkTaskDue(t) && !checkTaskOverdue(t))
       .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
   },
 
@@ -230,6 +317,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     return get().tasks
       .filter((t) => checkTaskOverdue(t))
       .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+  },
+
+  getUrgentTasks: () => {
+    const overdue = get().getOverdueTasks();
+    const due = get().getDueTasks();
+    const seen = new Set<string>();
+    const result: Task[] = [];
+    
+    [...overdue, ...due].forEach((t) => {
+      if (!seen.has(t.id)) {
+        seen.add(t.id);
+        result.push(t);
+      }
+    });
+    
+    return result;
   },
 
   getWeeklyStats: () => {

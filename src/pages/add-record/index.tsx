@@ -12,6 +12,7 @@ const DEFAULT_HINT_IMAGE = 'https://picsum.photos/id/110/600/600';
 const AddRecordPage: React.FC = () => {
   const router = useRouter();
   const addRecord = useAppStore((state) => state.addRecord);
+  const saveImagePermanently = useAppStore((state) => state.saveImagePermanently);
   const plants = useAppStore((state) => state.plants);
   const getPlantById = useAppStore((state) => state.getPlantById);
 
@@ -24,6 +25,7 @@ const AddRecordPage: React.FC = () => {
   const [hasRealImage, setHasRealImage] = useState<boolean>(false);
   const [notes, setNotes] = useState<string>('');
   const [treatment, setTreatment] = useState<string>('');
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   useEffect(() => {
     if (urlPlantId) {
@@ -79,7 +81,9 @@ const AddRecordPage: React.FC = () => {
     setHasRealImage(false);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSaving) return;
+    
     if (!plantId) {
       Taro.showToast({ title: '请选择植物', icon: 'none' });
       return;
@@ -99,28 +103,43 @@ const AddRecordPage: React.FC = () => {
       return;
     }
 
-    addRecord({
-      plantId,
-      plantName: plant.name,
-      type,
-      date,
-      image,
-      notes: notes.trim() || undefined,
-      treatment: treatment.trim() || undefined
-    });
+    setIsSaving(true);
+    Taro.showLoading({ title: '保存中...', mask: true });
 
-    console.log('[Record] New record saved:', {
-      plant: plant.name,
-      type: RecordTypeLabel[type],
-      date,
-      image,
-      hasRealImage
-    });
+    try {
+      console.log('[Record] Saving image permanently, temp path:', image.substring(0, 60));
+      const permanentImagePath = await saveImagePermanently(image);
+      console.log('[Record] Image saved permanently:', permanentImagePath.substring(0, 60));
 
-    Taro.showToast({ title: '保存成功', icon: 'success' });
-    setTimeout(() => {
-      Taro.navigateBack();
-    }, 1000);
+      addRecord({
+        plantId,
+        plantName: plant.name,
+        type,
+        date,
+        image: permanentImagePath,
+        notes: notes.trim() || undefined,
+        treatment: treatment.trim() || undefined
+      });
+
+      console.log('[Record] New record saved with permanent image:', {
+        plant: plant.name,
+        type: RecordTypeLabel[type],
+        date,
+        hasRealImage
+      });
+
+      Taro.hideLoading();
+      Taro.showToast({ title: '保存成功', icon: 'success' });
+      setTimeout(() => {
+        Taro.navigateBack();
+      }, 1000);
+    } catch (err) {
+      console.error('[Record] Save failed:', err);
+      Taro.hideLoading();
+      Taro.showToast({ title: '保存失败，请重试', icon: 'none' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const isFormValid = plantId && image;

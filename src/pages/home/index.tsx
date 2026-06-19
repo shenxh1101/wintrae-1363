@@ -11,6 +11,7 @@ import styles from './index.module.scss';
 
 const HomePage: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
+  const [scrollTo, setScrollTo] = useState<string>('');
   const plants = useAppStore((state) => state.plants);
   const tasks = useAppStore((state) => state.tasks);
   const isInitialized = useAppStore((state) => state.isInitialized);
@@ -19,6 +20,7 @@ const HomePage: React.FC = () => {
   const getWeeklyStats = useAppStore((state) => state.getWeeklyStats);
   const getDueTasks = useAppStore((state) => state.getDueTasks);
   const getOverdueTasks = useAppStore((state) => state.getOverdueTasks);
+  const getUrgentTasks = useAppStore((state) => state.getUrgentTasks);
   const completeTask = useAppStore((state) => state.completeTask);
   const isTaskDue = useAppStore((state) => state.isTaskDue);
   const isTaskOverdue = useAppStore((state) => state.isTaskOverdue);
@@ -27,6 +29,7 @@ const HomePage: React.FC = () => {
   const weeklyStats = useMemo(() => getWeeklyStats(), [tasks, isInitialized]);
   const dueTasks = useMemo(() => getDueTasks(), [tasks, isInitialized]);
   const overdueTasks = useMemo(() => getOverdueTasks(), [tasks, isInitialized]);
+  const urgentTasks = useMemo(() => getUrgentTasks(), [tasks, isInitialized]);
   const pendingToday = todayTasks.filter(t => !t.completed);
   const completedToday = todayTasks.filter(t => t.completed);
 
@@ -34,8 +37,8 @@ const HomePage: React.FC = () => {
     return plants.filter(p => p.healthStatus !== 'good');
   }, [plants]);
 
-  const hasUrgent = overdueTasks.length > 0 || dueTasks.length > 0;
-  const urgentCount = overdueTasks.length + dueTasks.length;
+  const hasUrgent = urgentTasks.length > 0;
+  const urgentCount = urgentTasks.length;
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -64,14 +67,19 @@ const HomePage: React.FC = () => {
   };
 
   const scrollToTasks = () => {
-    const query = Taro.createSelectorQuery();
-    query.select('#tasks-section').scrollOffset();
+    console.log('[Home] Scrolling to tasks section');
+    setScrollTo('tasks-section');
+    setTimeout(() => {
+      setScrollTo('');
+    }, 500);
   };
 
   return (
     <ScrollView
       className={styles.homePage}
       scrollY
+      scrollIntoView={scrollTo}
+      scrollWithAnimation
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
@@ -133,15 +141,15 @@ const HomePage: React.FC = () => {
               </View>
             )}
 
-            {dueTasks.filter(t => !overdueTasks.includes(t)).length > 0 && (
+            {dueTasks.length > 0 && (
               <View className={styles.urgentSubSection}>
                 <View className={styles.sectionTitle}>
                   <Text className={styles.dueTitle}>⏰ 刚刚到期</Text>
                   <Text className={styles.dueCount}>
-                    {dueTasks.filter(t => !overdueTasks.includes(t)).length}
+                    {dueTasks.length}
                   </Text>
                 </View>
-                {dueTasks.filter(t => !overdueTasks.includes(t)).map(task => (
+                {dueTasks.map(task => (
                   <TaskCard
                     key={task.id}
                     task={task}
