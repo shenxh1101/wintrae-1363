@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Button, Image, RefreshControl } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import { View, Text, ScrollView, Button } from '@tarojs/components';
+import Taro, { useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import { useAppStore } from '@/store';
 import RecordCard from '@/components/RecordCard';
@@ -50,6 +50,11 @@ const RecordsPage: React.FC = () => {
     if (type === 'all') return records.length;
     return records.filter(r => r.type === type).length;
   };
+
+  useDidShow(() => {
+    console.log('[Records] useDidShow - hydrating storage');
+    hydrateFromStorage();
+  });
 
   return (
     <View className={styles.recordsPage}>
@@ -104,9 +109,9 @@ const RecordsPage: React.FC = () => {
       <ScrollView
         className={styles.content}
         scrollY
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refresherEnabled
+        refresherTriggered={refreshing}
+        onRefresherRefresh={onRefresh}
       >
         {filteredRecords.length === 0 ? (
           <EmptyState

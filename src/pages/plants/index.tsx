@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Input, Button, Image, RefreshControl } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import { View, Text, ScrollView, Input, Button, Image } from '@tarojs/components';
+import Taro, { useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import { useAppStore } from '@/store';
 import PlantCard from '@/components/PlantCard';
@@ -15,6 +15,7 @@ const PlantsPage: React.FC = () => {
 
   const plants = useAppStore((state) => state.plants);
   const plantLibrary = useAppStore((state) => state.plantLibrary);
+  const hydrateFromStorage = useAppStore((state) => state.hydrateFromStorage);
 
   const filteredPlants = useMemo(() => {
     let result = [...plants];
@@ -40,14 +41,6 @@ const PlantsPage: React.FC = () => {
     );
   }, [plantLibrary, searchText]);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-      Taro.showToast({ title: '刷新成功', icon: 'success' });
-    }, 1000);
-  };
-
   const handleAddPlant = () => {
     Taro.navigateTo({ url: '/pages/add-plant/index' });
   };
@@ -63,6 +56,20 @@ const PlantsPage: React.FC = () => {
       showCancel: false,
       confirmText: '知道了'
     });
+  };
+
+  useDidShow(() => {
+    console.log('[Plants] useDidShow - hydrating storage');
+    hydrateFromStorage();
+  });
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    hydrateFromStorage();
+    setTimeout(() => {
+      setRefreshing(false);
+      Taro.showToast({ title: '刷新成功', icon: 'success' });
+    }, 800);
   };
 
   return (
@@ -96,9 +103,9 @@ const PlantsPage: React.FC = () => {
       <ScrollView
         className={styles.content}
         scrollY
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refresherEnabled
+        refresherTriggered={refreshing}
+        onRefresherRefresh={onRefresh}
       >
         {activeTab === 'my' ? (
           <>

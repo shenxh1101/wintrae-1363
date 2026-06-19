@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Button, RefreshControl, Image } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, Text, ScrollView, Button, Image } from '@tarojs/components';
+import Taro, { useDidShow } from '@tarojs/taro';
 import { useAppStore } from '@/store';
 import TaskCard from '@/components/TaskCard';
 import StatCard from '@/components/StatCard';
@@ -67,12 +67,18 @@ const HomePage: React.FC = () => {
   };
 
   const scrollToTasks = () => {
-    console.log('[Home] Scrolling to tasks section');
-    setScrollTo('tasks-section');
+    console.log('[Home] Scrolling to urgent section');
+    const targetId = hasUrgent ? 'urgent-section' : 'tasks-section';
+    setScrollTo(targetId);
     setTimeout(() => {
       setScrollTo('');
-    }, 500);
+    }, 600);
   };
+
+  useDidShow(() => {
+    console.log('[Home] useDidShow - hydrating storage for fresh state');
+    hydrateFromStorage();
+  });
 
   return (
     <ScrollView
@@ -80,9 +86,9 @@ const HomePage: React.FC = () => {
       scrollY
       scrollIntoView={scrollTo}
       scrollWithAnimation
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+      refresherEnabled
+      refresherTriggered={refreshing}
+      onRefresherRefresh={onRefresh}
     >
       <View className={styles.header}>
         <Text className={styles.greeting}>早上好 🌿</Text>
@@ -107,7 +113,7 @@ const HomePage: React.FC = () => {
 
       <View className={styles.content}>
         {hasUrgent && (
-          <View className={classnames(styles.section, styles.urgentSection)}>
+          <View className={classnames(styles.section, styles.urgentSection)} id="urgent-section">
             <View className={classnames(styles.urgentBanner, overdueTasks.length > 0 && styles.urgentBannerDanger)}>
               <View className={styles.urgentBannerHeader}>
                 <Text className={styles.urgentBannerIcon}>

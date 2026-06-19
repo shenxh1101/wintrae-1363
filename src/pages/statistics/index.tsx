@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Button, Image, RefreshControl } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import { View, Text, ScrollView, Button, Image } from '@tarojs/components';
+import Taro, { useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import { useAppStore } from '@/store';
 import StatCard from '@/components/StatCard';
@@ -154,13 +154,18 @@ const StatisticsPage: React.FC = () => {
   const selectedPlantInfo = selectedPlant !== 'all' ? plants.find(p => p.id === selectedPlant) : null;
   const selectedPlantStats = selectedPlant !== 'all' ? (plantTaskStats[selectedPlant] || { total: 0, completed: 0, overdue: 0, due: 0 }) : null;
 
+  useDidShow(() => {
+    console.log('[Statistics] useDidShow - hydrating storage');
+    hydrateFromStorage();
+  });
+
   return (
     <ScrollView
       className={styles.statisticsPage}
       scrollY
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+      refresherEnabled
+      refresherTriggered={refreshing}
+      onRefresherRefresh={onRefresh}
     >
       <View className={styles.content}>
         <View className={styles.section}>

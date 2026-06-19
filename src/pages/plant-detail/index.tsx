@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Image, Button } from '@tarojs/components';
-import Taro, { useRouter } from '@tarojs/taro';
+import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import { useAppStore } from '@/store';
 import { LightLevelLabel, TaskTypeLabel } from '@/types';
 import TaskCard from '@/components/TaskCard';
@@ -16,6 +16,7 @@ const PlantDetailPage: React.FC = () => {
   const getTasksByPlant = useAppStore((state) => state.getTasksByPlant);
   const getRecordsByPlant = useAppStore((state) => state.getRecordsByPlant);
   const completeTask = useAppStore((state) => state.completeTask);
+  const hydrateFromStorage = useAppStore((state) => state.hydrateFromStorage);
   const isTaskDue = useAppStore((state) => state.isTaskDue);
   const isTaskOverdue = useAppStore((state) => state.isTaskOverdue);
   
@@ -65,6 +66,11 @@ const PlantDetailPage: React.FC = () => {
       if (bOverdue !== aOverdue) return bOverdue - aOverdue;
       return `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`);
     });
+
+  useDidShow(() => {
+    console.log('[PlantDetail] useDidShow - hydrating storage');
+    hydrateFromStorage();
+  });
 
   return (
     <ScrollView className={styles.page} scrollY>

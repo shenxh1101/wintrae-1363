@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Button, RefreshControl } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import { View, Text, ScrollView, Button } from '@tarojs/components';
+import Taro, { useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import { useAppStore } from '@/store';
 import Calendar from '@/components/Calendar';
@@ -125,13 +125,18 @@ const CalendarPage: React.FC = () => {
 
   const hasAnyTask = filteredTasks.length > 0;
 
+  useDidShow(() => {
+    console.log('[Calendar] useDidShow - hydrating storage');
+    hydrateFromStorage();
+  });
+
   return (
     <ScrollView
       className={styles.calendarPage}
       scrollY
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+      refresherEnabled
+      refresherTriggered={refreshing}
+      onRefresherRefresh={onRefresh}
     >
       <View className={styles.content}>
         <Calendar
