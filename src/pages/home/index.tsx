@@ -13,12 +13,20 @@ const HomePage: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const plants = useAppStore((state) => state.plants);
   const tasks = useAppStore((state) => state.tasks);
+  const isInitialized = useAppStore((state) => state.isInitialized);
+  const hydrateFromStorage = useAppStore((state) => state.hydrateFromStorage);
   const getTodayTasks = useAppStore((state) => state.getTodayTasks);
   const getWeeklyStats = useAppStore((state) => state.getWeeklyStats);
+  const getDueTasks = useAppStore((state) => state.getDueTasks);
+  const getOverdueTasks = useAppStore((state) => state.getOverdueTasks);
   const completeTask = useAppStore((state) => state.completeTask);
+  const isTaskDue = useAppStore((state) => state.isTaskDue);
+  const isTaskOverdue = useAppStore((state) => state.isTaskOverdue);
 
-  const todayTasks = useMemo(() => getTodayTasks(), [tasks]);
-  const weeklyStats = useMemo(() => getWeeklyStats(), [tasks]);
+  const todayTasks = useMemo(() => getTodayTasks(), [tasks, isInitialized]);
+  const weeklyStats = useMemo(() => getWeeklyStats(), [tasks, isInitialized]);
+  const dueTasks = useMemo(() => getDueTasks(), [tasks, isInitialized]);
+  const overdueTasks = useMemo(() => getOverdueTasks(), [tasks, isInitialized]);
   const pendingToday = todayTasks.filter(t => !t.completed);
   const completedToday = todayTasks.filter(t => t.completed);
 
@@ -26,8 +34,12 @@ const HomePage: React.FC = () => {
     return plants.filter(p => p.healthStatus !== 'good');
   }, [plants]);
 
+  const hasUrgent = overdueTasks.length > 0 || dueTasks.length > 0;
+  const urgentCount = overdueTasks.length + dueTasks.length;
+
   const onRefresh = () => {
     setRefreshing(true);
+    hydrateFromStorage();
     setTimeout(() => {
       setRefreshing(false);
       Taro.showToast({ title: '刷新成功', icon: 'success' });
@@ -51,6 +63,11 @@ const HomePage: React.FC = () => {
     Taro.showToast({ title: '任务完成', icon: 'success' });
   };
 
+  const scrollToTasks = () => {
+    const query = Taro.createSelectorQuery();
+    query.select('#tasks-section').scrollOffset();
+  };
+
   return (
     <ScrollView
       className={styles.homePage}
@@ -63,13 +80,15 @@ const HomePage: React.FC = () => {
         <Text className={styles.greeting}>早上好 🌿</Text>
         <Text className={styles.subGreeting}>今天也要好好照顾你的植物哦</Text>
         <View className={styles.todayStats}>
-          <View className={styles.statItem}>
-            <Text className={styles.statNumber}>{pendingToday.length}</Text>
-            <Text className={styles.statLabel}>待办任务</Text>
+          <View className={classnames(styles.statItem, urgentCount > 0 && styles.statItemUrgent)}>
+            <Text className={classnames(styles.statNumber, urgentCount > 0 && styles.statNumberUrgent)}>
+              {urgentCount}
+            </Text>
+            <Text className={styles.statLabel}>需立即处理</Text>
           </View>
           <View className={styles.statItem}>
-            <Text className={styles.statNumber}>{completedToday.length}</Text>
-            <Text className={styles.statLabel}>已完成</Text>
+            <Text className={styles.statNumber}>{pendingToday.length}</Text>
+            <Text className={styles.statLabel}>今日待办</Text>
           </View>
           <View className={styles.statItem}>
             <Text className={styles.statNumber}>{plants.length}</Text>
@@ -79,6 +98,62 @@ const HomePage: React.FC = () => {
       </View>
 
       <View className={styles.content}>
+        {hasUrgent && (
+          <View className={classnames(styles.section, styles.urgentSection)}>
+            <View className={classnames(styles.urgentBanner, overdueTasks.length > 0 && styles.urgentBannerDanger)}>
+              <View className={styles.urgentBannerHeader}>
+                <Text className={styles.urgentBannerIcon}>
+                  {overdueTasks.length > 0 ? '🚨' : '⏰'}
+                </Text>
+                <Text className={styles.urgentBannerTitle}>
+                  {overdueTasks.length > 0
+                    ? `有 ${overdueTasks.length} 项任务已逾期！`
+                    : `有 ${dueTasks.length} 项任务到期待处理`}
+                </Text>
+              </View>
+              <Button className={styles.urgentBannerBtn} onClick={scrollToTasks}>
+                立即处理 →
+              </Button>
+            </View>
+
+            {overdueTasks.length > 0 && (
+              <View className={styles.urgentSubSection}>
+                <View className={styles.sectionTitle}>
+                  <Text className={styles.overdueTitle}>❗️ 已逾期任务</Text>
+                  <Text className={styles.overdueCount}>{overdueTasks.length}</Text>
+                </View>
+                {overdueTasks.map(task => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    showDate
+                    onComplete={() => handleCompleteTask(task.id)}
+                  />
+                ))}
+              </View>
+            )}
+
+            {dueTasks.filter(t => !overdueTasks.includes(t)).length > 0 && (
+              <View className={styles.urgentSubSection}>
+                <View className={styles.sectionTitle}>
+                  <Text className={styles.dueTitle}>⏰ 刚刚到期</Text>
+                  <Text className={styles.dueCount}>
+                    {dueTasks.filter(t => !overdueTasks.includes(t)).length}
+                  </Text>
+                </View>
+                {dueTasks.filter(t => !overdueTasks.includes(t)).map(task => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    showDate
+                    onComplete={() => handleCompleteTask(task.id)}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
         <View className={styles.section}>
           <View className={styles.quickActions}>
             <Button className={styles.actionBtn} onClick={handleAddPlant}>
@@ -106,6 +181,7 @@ const HomePage: React.FC = () => {
                   styles.alertCard,
                   plant.healthStatus === 'danger' && styles.danger
                 )}
+                onClick={() => Taro.navigateTo({ url: `/pages/plant-detail/index?id=${plant.id}` })}
               >
                 <Text className={styles.alertIcon}>
                   {plant.healthStatus === 'danger' ? '🚨' : '⚠️'}
@@ -116,15 +192,18 @@ const HomePage: React.FC = () => {
                     {plant.healthStatus === 'danger' ? '需要立即处理！' : '建议关注一下'}
                   </Text>
                 </View>
+                <Text className={styles.alertArrow}>→</Text>
               </View>
             ))}
           </View>
         )}
 
-        <View className={styles.section}>
+        <View className={styles.section} id="tasks-section">
           <View className={styles.sectionTitle}>
             <Text>今日待办</Text>
-            <Text className={styles.seeAll}>全部</Text>
+            <Text className={styles.taskSummary}>
+              已完成 {completedToday.length}/{todayTasks.length}
+            </Text>
           </View>
           {todayTasks.length === 0 ? (
             <EmptyState
@@ -135,13 +214,33 @@ const HomePage: React.FC = () => {
             />
           ) : (
             <View className={styles.tasksList}>
-              {todayTasks.map(task => (
+              {pendingToday.map(task => (
                 <TaskCard
                   key={task.id}
                   task={task}
                   onComplete={() => handleCompleteTask(task.id)}
                 />
               ))}
+              {pendingToday.length === 0 && completedToday.length > 0 && (
+                <View className={styles.allDoneCard}>
+                  <Text className={styles.allDoneIcon}>🎉</Text>
+                  <Text className={styles.allDoneText}>太棒了！今天的任务全部完成</Text>
+                </View>
+              )}
+              {completedToday.length > 0 && (
+                <>
+                  <Text className={styles.completedSectionTitle}>
+                    ✓ 已完成 ({completedToday.length})
+                  </Text>
+                  {completedToday.map(task => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      showComplete={false}
+                    />
+                  ))}
+                </>
+              )}
             </View>
           )}
         </View>
@@ -195,11 +294,20 @@ const HomePage: React.FC = () => {
         <View className={styles.section}>
           <View className={styles.sectionTitle}>
             <Text>我的植物</Text>
-            <Text className={styles.seeAll}>查看全部</Text>
+            <Text
+              className={styles.seeAll}
+              onClick={() => Taro.switchTab({ url: '/pages/plants/index' })}
+            >
+              查看全部
+            </Text>
           </View>
           <ScrollView scrollX className={styles.plantsGrid}>
             {plants.map(plant => (
-              <View key={plant.id} className={styles.plantMiniCard}>
+              <View
+                key={plant.id}
+                className={styles.plantMiniCard}
+                onClick={() => Taro.navigateTo({ url: `/pages/plant-detail/index?id=${plant.id}` })}
+              >
                 <Image className={styles.plantMiniAvatar} src={plant.avatar} mode="aspectFill" />
                 <Text className={styles.plantMiniName}>{plant.name}</Text>
                 <Text className={classnames(

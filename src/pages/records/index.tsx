@@ -15,6 +15,7 @@ const RecordsPage: React.FC = () => {
 
   const records = useAppStore((state) => state.records);
   const plants = useAppStore((state) => state.plants);
+  const hydrateFromStorage = useAppStore((state) => state.hydrateFromStorage);
 
   const filteredRecords = useMemo(() => {
     let result = [...records].sort((a, b) => 
@@ -34,10 +35,11 @@ const RecordsPage: React.FC = () => {
 
   const onRefresh = () => {
     setRefreshing(true);
+    hydrateFromStorage();
     setTimeout(() => {
       setRefreshing(false);
       Taro.showToast({ title: '刷新成功', icon: 'success' });
-    }, 1000);
+    }, 800);
   };
 
   const handleAddRecord = () => {

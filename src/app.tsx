@@ -1,17 +1,26 @@
 import React, { useEffect } from 'react';
 import { useDidShow, useDidHide } from '@tarojs/taro';
-// 全局样式
+import { useAppStore } from '@/store';
 import './app.scss';
 
 function App(props) {
-  // 可以使用所有的 React Hooks
-  useEffect(() => {});
+  const hydrateFromStorage = useAppStore((state) => state.hydrateFromStorage);
 
-  // 对应 onShow
-  useDidShow(() => {});
+  useEffect(() => {
+    hydrateFromStorage();
+    console.log('[App] Hydrated on initial mount');
+  }, [hydrateFromStorage]);
 
-  // 对应 onHide
-  useDidHide(() => {});
+  useDidShow(() => {
+    hydrateFromStorage();
+    console.log('[App] useDidShow - Rehydrated from storage');
+  });
+
+  useDidHide(() => {
+    const persistToStorage = useAppStore.getState().persistToStorage;
+    persistToStorage();
+    console.log('[App] useDidHide - Persisted to storage');
+  });
 
   return props.children;
 }

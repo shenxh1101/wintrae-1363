@@ -16,6 +16,8 @@ const PlantDetailPage: React.FC = () => {
   const getTasksByPlant = useAppStore((state) => state.getTasksByPlant);
   const getRecordsByPlant = useAppStore((state) => state.getRecordsByPlant);
   const completeTask = useAppStore((state) => state.completeTask);
+  const isTaskDue = useAppStore((state) => state.isTaskDue);
+  const isTaskOverdue = useAppStore((state) => state.isTaskOverdue);
   
   const [activeTab, setActiveTab] = useState<'info' | 'tasks' | 'records'>('info');
   const plant = getPlantById(plantId);
@@ -55,7 +57,14 @@ const PlantDetailPage: React.FC = () => {
     Taro.navigateTo({ url: `/pages/add-record/index?plantId=${plantId}` });
   };
 
-  const pendingTasks = tasks.filter(t => !t.completed);
+  const pendingTasks = tasks
+    .filter(t => !t.completed)
+    .sort((a, b) => {
+      const aOverdue = isTaskOverdue(a) ? 2 : isTaskDue(a) ? 1 : 0;
+      const bOverdue = isTaskOverdue(b) ? 2 : isTaskDue(b) ? 1 : 0;
+      if (bOverdue !== aOverdue) return bOverdue - aOverdue;
+      return `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`);
+    });
 
   return (
     <ScrollView className={styles.page} scrollY>

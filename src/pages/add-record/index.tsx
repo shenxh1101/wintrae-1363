@@ -7,6 +7,8 @@ import { RecordType, RecordTypeLabel } from '@/types';
 import { formatDate } from '@/utils/date';
 import styles from './index.module.scss';
 
+const DEFAULT_HINT_IMAGE = 'https://picsum.photos/id/110/600/600';
+
 const AddRecordPage: React.FC = () => {
   const router = useRouter();
   const addRecord = useAppStore((state) => state.addRecord);
@@ -18,7 +20,8 @@ const AddRecordPage: React.FC = () => {
   const [plantId, setPlantId] = useState<string>(urlPlantId || '');
   const [type, setType] = useState<RecordType>('growth');
   const [date, setDate] = useState<string>(formatDate(new Date()));
-  const [image, setImage] = useState<string>('https://picsum.photos/id/120/600/600');
+  const [image, setImage] = useState<string>('');
+  const [hasRealImage, setHasRealImage] = useState<boolean>(false);
   const [notes, setNotes] = useState<string>('');
   const [treatment, setTreatment] = useState<string>('');
 
@@ -37,15 +40,52 @@ const AddRecordPage: React.FC = () => {
     { value: 'leaf', label: '叶片异常', icon: '🍂' }
   ];
 
-  const handleChangeImage = () => {
-    const randomId = 110 + Math.floor(Math.random() * 15);
-    setImage(`https://picsum.photos/id/${randomId}/600/600`);
-    Taro.showToast({ title: '已更换图片', icon: 'none' });
+  const handleChooseImage = async (source: 'camera' | 'album') => {
+    try {
+      const res = await Taro.chooseImage({
+        count: 1,
+        sourceType: source === 'camera' ? ['camera'] : ['album'],
+        sizeType: ['compressed'],
+      });
+
+      if (res.tempFiles && res.tempFiles.length > 0) {
+        const tempPath = res.tempFiles[0].path || (res.tempFilePaths && res.tempFilePaths[0]);
+        if (tempPath) {
+          setImage(tempPath);
+          setHasRealImage(true);
+          Taro.showToast({ title: '已选择照片', icon: 'success' });
+          console.log('[Record] Image selected from', source, ':', tempPath);
+        }
+      }
+    } catch (err: any) {
+      console.error('[Record] Failed to choose image:', err);
+      if (err.errMsg && err.errMsg.includes('cancel')) {
+        return;
+      }
+      Taro.showToast({ title: '选择照片失败，请重试', icon: 'none' });
+    }
+  };
+
+  const handlePreviewImage = () => {
+    if (!image) return;
+    Taro.previewImage({
+      urls: [image],
+      current: image
+    });
+  };
+
+  const handleRemoveImage = () => {
+    setImage('');
+    setHasRealImage(false);
   };
 
   const handleSubmit = () => {
     if (!plantId) {
       Taro.showToast({ title: '请选择植物', icon: 'none' });
+      return;
+    }
+    if (!image) {
+      Taro.showToast({ title: '请选择或拍摄照片', icon: 'none' });
       return;
     }
     if (!notes.trim() && type !== 'growth') {
@@ -69,13 +109,15 @@ const AddRecordPage: React.FC = () => {
       treatment: treatment.trim() || undefined
     });
 
-    console.log('[Record] New record added:', {
+    console.log('[Record] New record saved:', {
       plant: plant.name,
       type: RecordTypeLabel[type],
-      date
+      date,
+      image,
+      hasRealImage
     });
 
-    Taro.showToast({ title: '添加成功', icon: 'success' });
+    Taro.showToast({ title: '保存成功', icon: 'success' });
     setTimeout(() => {
       Taro.navigateBack();
     }, 1000);
@@ -83,6 +125,7 @@ const AddRecordPage: React.FC = () => {
 
   const isFormValid = plantId && image;
   const showTreatment = type === 'pest' || type === 'leaf';
+  const displayImage = image || DEFAULT_HINT_IMAGE;
 
   return (
     <View className={styles.page}>
@@ -92,12 +135,48 @@ const AddRecordPage: React.FC = () => {
             记录照片<Text className={styles.required}>*</Text>
           </Text>
           <View className={styles.imageSection}>
-            <View className={styles.imagePreview}>
-              <Image className={styles.previewImage} src={image} mode="aspectFill" />
+            <View
+              className={classnames(styles.imagePreview, !hasRealImage && styles.imagePreviewHint)}
+              onClick={handlePreviewImage}
+            >
+              <Image className={styles.previewImage} src={displayImage} mode="aspectFill" />
+              {!hasRealImage && (
+                <View className={styles.imageHintOverlay}>
+                  <Text className={styles.imageHintIcon}>📷</Text>
+                  <Text className={styles.imageHintText}>请拍摄或选择植物照片</Text>
+                </View>
+              )}
+              {hasRealImage && (
+                <View className={styles.imageBadge}>
+                  <Text className={styles.imageBadgeText}>✓ 已选择</Text>
+                </View>
+              )}
             </View>
-            <Button className={styles.imageBtn} onClick={handleChangeImage}>
-              🔄 换一张图片
-            </Button>
+            <View className={styles.imageBtnRow}>
+              <Button
+                className={classnames(styles.imageBtn, styles.imageBtnPrimary)}
+                onClick={() => handleChooseImage('camera')}
+              >
+                📷 拍照
+              </Button>
+              <Button
+                className={styles.imageBtn}
+                onClick={() => handleChooseImage('album')}
+              >
+                🖼 相册
+              </Button>
+              {hasRealImage && (
+                <Button
+                  className={classnames(styles.imageBtn, styles.imageBtnDanger)}
+                  onClick={handleRemoveImage}
+                >
+                  ❌ 移除
+                </Button>
+              )}
+            </View>
+            <Text className={styles.hint}>
+              建议：近距离拍摄清晰的叶片和整体照片，便于后续对比生长变化
+            </Text>
           </View>
         </View>
 
@@ -157,12 +236,12 @@ const AddRecordPage: React.FC = () => {
           </Text>
           <Textarea
             className={styles.formTextarea}
-            placeholder={type === 'growth' 
-              ? '记录一下植物的生长变化...' 
-              : '请详细描述发现的问题...'}
+            placeholder={type === 'growth'
+              ? '记录一下植物的生长变化，例如：新长了3片叶子，长出花苞等...'
+              : '请详细描述发现的问题，例如：叶片发黄、有虫洞、有白粉等...'}
             value={notes}
             onInput={(e) => setNotes(e.detail.value)}
-            maxlength={200}
+            maxlength={500}
             autoHeight
           />
         </View>
@@ -172,14 +251,14 @@ const AddRecordPage: React.FC = () => {
             <Text className={styles.formLabel}>处理措施</Text>
             <Textarea
               className={styles.formTextarea}
-              placeholder="记录已采取或计划采取的处理措施..."
+              placeholder="记录已采取或计划采取的处理措施，例如：喷洒多菌灵稀释液、移到通风处、减少浇水频率、摘除病叶等..."
               value={treatment}
               onInput={(e) => setTreatment(e.detail.value)}
-              maxlength={200}
+              maxlength={500}
               autoHeight
             />
             <Text className={styles.hint}>
-              例如：喷洒多菌灵、移到通风处、减少浇水等
+              完整的处理记录有助于后续判断处理措施是否有效
             </Text>
           </View>
         )}

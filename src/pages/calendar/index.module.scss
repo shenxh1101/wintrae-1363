@@ -21,12 +21,57 @@
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
-  margin-bottom: $spacing-xs;
+  margin-bottom: $spacing-md;
+  display: block;
 }
 
-.tasksCount {
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
+.taskStatsRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.statBadge {
+  padding: 6rpx 16rpx;
+  border-radius: $radius-round;
+}
+
+.statBadgeText {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.statOverdue {
+  background: #FEF2F2;
+
+  .statBadgeText {
+    color: #DC2626;
+  }
+}
+
+.statDue {
+  background: #FFFBEB;
+
+  .statBadgeText {
+    color: #D97706;
+  }
+}
+
+.statPending {
+  background: #F3F4F6;
+
+  .statBadgeText {
+    color: #6B7280;
+  }
+}
+
+.statDone {
+  background: #ECFDF5;
+
+  .statBadgeText {
+    color: #059669;
+  }
 }
 
 .filterBar {
@@ -133,4 +178,84 @@
   height: 16rpx;
   border-radius: 50%;
   margin-right: $spacing-xs;
+}
+
+.taskGroup {
+  margin-bottom: $spacing-lg;
+}
+
+.taskGroupHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-sm $spacing-md;
+  margin-bottom: $spacing-sm;
+  border-radius: $radius-sm;
+}
+
+.taskGroupTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+}
+
+.taskGroupCount {
+  min-width: 40rpx;
+  height: 40rpx;
+  padding: 0 12rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #E5E7EB;
+  color: #374151;
+}
+
+.groupOverdue {
+  background: #FEF2F2;
+
+  .taskGroupTitle {
+    color: #DC2626;
+  }
+}
+
+.groupDue {
+  background: #FFFBEB;
+
+  .taskGroupTitle {
+    color: #D97706;
+  }
+}
+
+.groupPending {
+  background: #F9FAFB;
+
+  .taskGroupTitle {
+    color: #374151;
+  }
+}
+
+.groupCompleted {
+  background: #ECFDF5;
+
+  .taskGroupTitle {
+    color: #059669;
+  }
+}
+
+.countOverdue {
+  background: #FECACA;
+  color: #B91C1C;
+}
+
+.countDue {
+  background: #FDE68A;
+  color: #B45309;
+}
+
+.countCompleted {
+  background: #A7F3D0;
+  color: #047857;
 }

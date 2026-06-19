@@ -36,6 +36,18 @@
   border-radius: $radius-lg;
   padding: $spacing-md $spacing-lg;
   flex: 1;
+  transition: all $transition-base;
+
+  &.statItemUrgent {
+    background: $color-error;
+    box-shadow: 0 0 24rpx rgba(239, 68, 68, 0.5);
+    animation: urgentPulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes urgentPulse {
+  0%, 100% { box-shadow: 0 0 24rpx rgba(239, 68, 68, 0.5); }
+  50% { box-shadow: 0 0 40rpx rgba(239, 68, 68, 0.8); }
 }
 
 .statNumber {
@@ -44,6 +56,11 @@
   font-weight: $font-weight-bold;
   display: block;
   margin-bottom: $spacing-xs;
+
+  &.statNumberUrgent {
+    color: #ffffff;
+    text-shadow: 0 0 10rpx rgba(255, 255, 255, 0.5);
+  }
 }
 
 .statLabel {
@@ -213,4 +230,142 @@
 .statusDanger {
   background: #FEF2F2;
   color: $color-error;
+}
+
+.urgentSection {
+  margin-top: $spacing-md;
+}
+
+.urgentBanner {
+  background: linear-gradient(135deg, $color-warning 0%, #F97316 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  box-shadow: 0 8rpx 32rpx rgba(245, 158, 11, 0.3);
+
+  &.urgentBannerDanger {
+    background: linear-gradient(135deg, $color-error 0%, #DC2626 100%);
+    box-shadow: 0 8rpx 32rpx rgba(239, 68, 68, 0.35);
+  }
+}
+
+.urgentBannerHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.urgentBannerIcon {
+  font-size: 56rpx;
+  margin-right: $spacing-sm;
+}
+
+.urgentBannerTitle {
+  flex: 1;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+}
+
+.urgentBannerBtn {
+  @include button-reset;
+  background: $color-text-white;
+  color: $color-warning;
+  height: $button-height-sm;
+  padding: 0 $spacing-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.96);
+  }
+
+  @at-root .urgentBannerDanger & {
+    color: $color-error;
+  }
+}
+
+.urgentSubSection {
+  margin-bottom: $spacing-lg;
+}
+
+.overdueTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-error;
+}
+
+.overdueCount {
+  background: $color-error;
+  color: $color-text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  min-width: 40rpx;
+  text-align: center;
+}
+
+.dueTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-warning;
+}
+
+.dueCount {
+  background: $color-warning;
+  color: $color-text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  min-width: 40rpx;
+  text-align: center;
+}
+
+.alertArrow {
+  font-size: $font-size-lg;
+  color: $color-text-tertiary;
+  margin-left: $spacing-sm;
+}
+
+.taskSummary {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.allDoneCard {
+  background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-xl $spacing-lg;
+  margin-bottom: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.allDoneIcon {
+  font-size: 80rpx;
+  margin-bottom: $spacing-sm;
+}
+
+.allDoneText {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-primary-dark;
+}
+
+.completedSectionTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-sm;
+  margin-top: $spacing-lg;
+  display: block;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
 }

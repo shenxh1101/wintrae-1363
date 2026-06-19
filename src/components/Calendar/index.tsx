@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text } from '@tarojs/components';
 import classnames from 'classnames';
 import { getMonthDays, isSameDay, isToday, formatDate } from '@/utils/date';
-import { TaskTypeColor } from '@/types';
+import { TaskTypeColor, Task } from '@/types';
 import { useAppStore } from '@/store';
 import styles from './index.module.scss';
 
@@ -11,9 +11,13 @@ interface CalendarProps {
   onDateSelect?: (date: Date) => void;
 }
 
+type DayStatus = 'none' | 'allDone' | 'pending' | 'due' | 'overdue';
+
 const Calendar: React.FC<CalendarProps> = ({ selectedDate = new Date(), onDateSelect }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
   const getTasksByDate = useAppStore((state) => state.getTasksByDate);
+  const isTaskDue = useAppStore((state) => state.isTaskDue);
+  const isTaskOverdue = useAppStore((state) => state.isTaskOverdue);
   
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -40,6 +44,23 @@ const Calendar: React.FC<CalendarProps> = ({ selectedDate = new Date(), onDateSe
     return types.slice(0, 3);
   };
 
+  const getDayStatus = (date: Date): DayStatus => {
+    const dateStr = formatDate(date);
+    const tasks = getTasksByDate(dateStr);
+    if (tasks.length === 0) return 'none';
+    
+    const hasOverdue = tasks.some(t => isTaskOverdue(t));
+    if (hasOverdue) return 'overdue';
+    
+    const hasDue = tasks.some(t => isTaskDue(t));
+    if (hasDue) return 'due';
+    
+    const allDone = tasks.every(t => t.completed);
+    if (allDone) return 'allDone';
+    
+    return 'pending';
+  };
+
   const isCurrentMonth = (date: Date) => {
     return date.getMonth() === month;
   };
@@ -50,6 +71,25 @@ const Calendar: React.FC<CalendarProps> = ({ selectedDate = new Date(), onDateSe
         <Text className={styles.navBtn} onClick={handlePrevMonth}>‹</Text>
         <Text className={styles.monthTitle}>{year}年{month + 1}月</Text>
         <Text className={styles.navBtn} onClick={handleNextMonth}>›</Text>
+      </View>
+
+      <View className={styles.calendarLegend}>
+        <View className={styles.legendDotRow}>
+          <View className={classnames(styles.legendSquare, styles.legendOverdue)} />
+          <Text className={styles.legendText}>逾期</Text>
+        </View>
+        <View className={styles.legendDotRow}>
+          <View className={classnames(styles.legendSquare, styles.legendDue)} />
+          <Text className={styles.legendText}>到期</Text>
+        </View>
+        <View className={styles.legendDotRow}>
+          <View className={classnames(styles.legendSquare, styles.legendPending)} />
+          <Text className={styles.legendText}>待办</Text>
+        </View>
+        <View className={styles.legendDotRow}>
+          <View className={classnames(styles.legendSquare, styles.legendAllDone)} />
+          <Text className={styles.legendText}>完成</Text>
+        </View>
       </View>
       
       <View className={styles.weekDayRow}>
@@ -64,6 +104,7 @@ const Calendar: React.FC<CalendarProps> = ({ selectedDate = new Date(), onDateSe
           const isTodayDate = isToday(date);
           const isCurMonth = isCurrentMonth(date);
           const indicators = getTaskIndicators(date);
+          const dayStatus = getDayStatus(date);
 
           return (
             <View
@@ -72,7 +113,10 @@ const Calendar: React.FC<CalendarProps> = ({ selectedDate = new Date(), onDateSe
                 styles.dayCell,
                 !isCurMonth && styles.otherMonth,
                 isSelected && styles.selected,
-                isTodayDate && styles.today
+                isTodayDate && styles.today,
+                !isSelected && dayStatus === 'overdue' && styles.hasOverdue,
+                !isSelected && dayStatus === 'due' && styles.hasDue,
+                !isSelected && dayStatus === 'allDone' && styles.allDone
               )}
               onClick={() => handleDateClick(date)}
             >
@@ -87,6 +131,9 @@ const Calendar: React.FC<CalendarProps> = ({ selectedDate = new Date(), onDateSe
                     />
                   ))}
                 </View>
+              )}
+              {dayStatus === 'overdue' && !isSelected && (
+                <View className={styles.cornerBadge}>!</View>
               )}
             </View>
           );

@@ -46,6 +46,88 @@
   }
 }
 
+.plantSummaryCard {
+  background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  border: 2rpx solid #A7F3D0;
+  box-shadow: $shadow-card;
+}
+
+.plantSummaryHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.plantSummaryAvatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-md;
+  margin-right: $spacing-md;
+}
+
+.plantSummaryInfo {
+  flex: 1;
+}
+
+.plantSummaryName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.plantSummarySpecies {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.plantSummaryStats {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: $radius-md;
+  padding: $spacing-sm;
+}
+
+.summaryStatItem {
+  text-align: center;
+  flex: 1;
+}
+
+.summaryStatNum {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.summaryStatLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.summaryStatBlue {
+  color: #3B82F6;
+}
+
+.summaryStatRed {
+  color: #EF4444;
+}
+
+.summaryStatYellow {
+  color: #F59E0B;
+}
+
+.summaryStatGreen {
+  color: #10B981;
+}
+
 .plantSelector {
   display: flex;
   flex-direction: row;
@@ -68,10 +150,15 @@
   white-space: nowrap;
   box-shadow: $shadow-card;
   transition: all $transition-base;
+  position: relative;
 
   &.active {
     background: $color-primary;
     color: $color-text-white;
+  }
+
+  &.hasUrgent {
+    border: 2rpx solid #F59E0B;
   }
 }
 
@@ -80,6 +167,15 @@
   height: 48rpx;
   border-radius: 50%;
   margin-right: $spacing-xs;
+}
+
+.chipUrgentDot {
+  position: absolute;
+  top: -6rpx;
+  right: -6rpx;
+  font-size: 16rpx;
+  color: #EF4444;
+  line-height: 1;
 }
 
 .chartContainer {
@@ -95,6 +191,7 @@
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
   margin-bottom: $spacing-lg;
+  display: block;
 }
 
 .progressBar {
@@ -199,18 +296,29 @@
 }
 
 .historyIcon {
-  width: 48rpx;
-  height: 48rpx;
+  width: 64rpx;
+  height: 64rpx;
   border-radius: $radius-sm;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: $spacing-md;
-  font-size: 24rpx;
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.historyImage {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-sm;
+  margin-right: $spacing-md;
+  flex-shrink: 0;
+  object-fit: cover;
 }
 
 .historyInfo {
   flex: 1;
+  min-width: 0;
 }
 
 .historyTitle {
@@ -218,6 +326,9 @@
   color: $color-text-primary;
   display: block;
   margin-bottom: 4rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .historyDate {
@@ -227,16 +338,206 @@
 
 .historyStatus {
   font-size: $font-size-xs;
-  padding: 4rpx 12rpx;
+  padding: 6rpx 14rpx;
   border-radius: $radius-xs;
+  font-weight: $font-weight-medium;
+  flex-shrink: 0;
+  margin-left: $spacing-sm;
 }
 
 .statusCompleted {
   background: #ECFDF5;
-  color: $color-success;
+  color: #059669;
 }
 
 .statusPending {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
+.statusDue {
   background: #FEF3C7;
-  color: $color-warning;
+  color: #D97706;
+}
+
+.statusOverdue {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xl;
+}
+
+.modalContent {
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  width: 100%;
+  max-width: 650rpx;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-lg;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.modalTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.modalClose {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: $color-bg-page;
+  color: $color-text-secondary;
+  font-size: $font-size-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalBody {
+  padding: $spacing-lg;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modalSubtitle {
+  margin-bottom: $spacing-md;
+
+  Text {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+}
+
+.modalFeatures {
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.featureItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: $spacing-xs 0;
+
+  &:not(:last-child) {
+    margin-bottom: $spacing-xs;
+  }
+}
+
+.featureIcon {
+  margin-right: $spacing-sm;
+  font-size: $font-size-md;
+}
+
+.featureText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.exportOptions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.exportOptionsTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.exportOption {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+    border-color: $color-primary;
+  }
+
+  &.exportOptionDisabled {
+    opacity: 0.5;
+
+    &:active {
+      transform: none;
+      border-color: transparent;
+    }
+  }
+}
+
+.exportOptionLeft {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.exportOptionIcon {
+  font-size: 48rpx;
+  margin-right: $spacing-md;
+}
+
+.exportOptionName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.exportOptionDesc {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  display: block;
+}
+
+.exportOptionBadge {
+  padding: 8rpx 16rpx;
+  background: $color-primary;
+  color: $color-text-white;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  border-radius: $radius-round;
+  margin-left: $spacing-sm;
+  flex-shrink: 0;
+
+  &.badgeDisabled {
+    background: #9CA3AF;
+  }
 }

@@ -12,7 +12,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: $spacing-lg;
+  margin-bottom: $spacing-md;
 }
 
 .navBtn {
@@ -28,10 +28,56 @@
   color: $color-text-primary;
 }
 
+.calendarLegend {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-xs;
+  margin-bottom: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-sm;
+}
+
+.legendDotRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.legendSquare {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 4rpx;
+}
+
+.legendOverdue {
+  background: #EF4444;
+}
+
+.legendDue {
+  background: #F59E0B;
+}
+
+.legendPending {
+  background: #E5E7EB;
+}
+
+.legendAllDone {
+  background: #22C55E;
+}
+
+.legendText {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
 .weekDayRow {
   display: flex;
   flex-direction: row;
-  margin-bottom: $spacing-md;
+  margin-bottom: $spacing-xs;
 }
 
 .weekDay {
@@ -58,6 +104,8 @@
   justify-content: center;
   position: relative;
   transition: all $transition-fast;
+  border-radius: $radius-sm;
+  margin: 2rpx 0;
 
   &:active {
     transform: scale(0.95);
@@ -81,6 +129,39 @@
     .dayNumber {
       color: $color-text-white;
     }
+
+    .cornerBadge {
+      color: $color-text-white;
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  &.hasOverdue {
+    background: #FEF2F2;
+    border: 2rpx solid #EF4444;
+
+    .dayNumber {
+      color: #B91C1C;
+      font-weight: $font-weight-bold;
+    }
+  }
+
+  &.hasDue {
+    background: #FFFBEB;
+    border: 2rpx solid #F59E0B;
+
+    .dayNumber {
+      color: #B45309;
+      font-weight: $font-weight-semibold;
+    }
+  }
+
+  &.allDone {
+    background: #ECFDF5;
+
+    .dayNumber {
+      color: #047857;
+    }
   }
 }
 
@@ -101,4 +182,21 @@
   width: 8rpx;
   height: 8rpx;
   border-radius: 50%;
+}
+
+.cornerBadge {
+  position: absolute;
+  top: 2rpx;
+  right: 6rpx;
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: #EF4444;
+  color: #fff;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }

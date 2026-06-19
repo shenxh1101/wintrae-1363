@@ -46,6 +46,16 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  position: relative;
+
+  &.imagePreviewHint {
+    border: 2rpx dashed $color-primary-light;
+
+    .previewImage {
+      opacity: 0.3;
+      filter: blur(2rpx);
+    }
+  }
 }
 
 .previewImage {
@@ -53,16 +63,59 @@
   height: 100%;
 }
 
-.imagePlaceholder {
+.imageHintOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.imageHintIcon {
   font-size: 80rpx;
+  margin-bottom: $spacing-sm;
+}
+
+.imageHintText {
+  font-size: $font-size-md;
+  color: $color-primary-dark;
+  font-weight: $font-weight-medium;
+}
+
+.imageBadge {
+  position: absolute;
+  top: $spacing-sm;
+  right: $spacing-sm;
+  background: $color-success;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+}
+
+.imageBadgeText {
+  font-size: $font-size-xs;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}
+
+.imageBtnRow {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-sm;
+  width: 100%;
 }
 
 .imageBtn {
   @include button-reset;
+  flex: 1;
   background: $color-bg-page;
   color: $color-primary;
   height: $button-height-md;
-  padding: 0 $spacing-xl;
+  padding: 0 $spacing-md;
   border-radius: $radius-button;
   font-size: $font-size-md;
   font-weight: $font-weight-medium;
@@ -70,6 +123,16 @@
   &:active {
     opacity: 0.9;
     transform: scale(0.96);
+  }
+
+  &.imageBtnPrimary {
+    background: $color-primary;
+    color: $color-text-white;
+  }
+
+  &.imageBtnDanger {
+    background: #FEF2F2;
+    color: $color-error;
   }
 }
 

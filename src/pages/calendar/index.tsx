@@ -6,7 +6,7 @@ import { useAppStore } from '@/store';
 import Calendar from '@/components/Calendar';
 import TaskCard from '@/components/TaskCard';
 import EmptyState from '@/components/EmptyState';
-import { TaskTypeLabel, TaskTypeColor, TaskType } from '@/types';
+import { TaskTypeLabel, TaskTypeColor, TaskType, Task } from '@/types';
 import { formatDate, getDayName } from '@/utils/date';
 import styles from './index.module.scss';
 
@@ -18,6 +18,9 @@ const CalendarPage: React.FC = () => {
   const tasks = useAppStore((state) => state.tasks);
   const getTasksByDate = useAppStore((state) => state.getTasksByDate);
   const completeTask = useAppStore((state) => state.completeTask);
+  const isTaskDue = useAppStore((state) => state.isTaskDue);
+  const isTaskOverdue = useAppStore((state) => state.isTaskOverdue);
+  const hydrateFromStorage = useAppStore((state) => state.hydrateFromStorage);
 
   const selectedDateStr = formatDate(selectedDate);
   const dayTasks = useMemo(() => getTasksByDate(selectedDateStr), [tasks, selectedDateStr]);
@@ -27,12 +30,39 @@ const CalendarPage: React.FC = () => {
     return dayTasks.filter(t => t.type === filterType);
   }, [dayTasks, filterType]);
 
+  const { overdueTasks, dueTasks, pendingTasks, completedTasks } = useMemo(() => {
+    const overdue: Task[] = [];
+    const due: Task[] = [];
+    const pending: Task[] = [];
+    const completed: Task[] = [];
+    
+    filteredTasks.forEach(task => {
+      if (task.completed) {
+        completed.push(task);
+      } else if (isTaskOverdue(task)) {
+        overdue.push(task);
+      } else if (isTaskDue(task)) {
+        due.push(task);
+      } else {
+        pending.push(task);
+      }
+    });
+    
+    return {
+      overdueTasks: overdue,
+      dueTasks: due,
+      pendingTasks: pending,
+      completedTasks: completed
+    };
+  }, [filteredTasks, isTaskDue, isTaskOverdue]);
+
   const onRefresh = () => {
     setRefreshing(true);
+    hydrateFromStorage();
     setTimeout(() => {
       setRefreshing(false);
       Taro.showToast({ title: '刷新成功', icon: 'success' });
-    }, 1000);
+    }, 800);
   };
 
   const handleDateSelect = (date: Date) => {
@@ -52,6 +82,48 @@ const CalendarPage: React.FC = () => {
 
   const pendingCount = dayTasks.filter(t => !t.completed).length;
   const completedCount = dayTasks.filter(t => t.completed).length;
+  const overdueCount = dayTasks.filter(t => !t.completed && isTaskOverdue(t)).length;
+  const dueCount = dayTasks.filter(t => !t.completed && !isTaskOverdue(t) && isTaskDue(t)).length;
+
+  const renderTaskGroup = (title: string, tasks: Task[], variant: 'overdue' | 'due' | 'pending' | 'completed') => {
+    if (tasks.length === 0) return null;
+    return (
+      <View className={styles.taskGroup} key={variant}>
+        <View className={classnames(
+          styles.taskGroupHeader,
+          variant === 'overdue' && styles.groupOverdue,
+          variant === 'due' && styles.groupDue,
+          variant === 'pending' && styles.groupPending,
+          variant === 'completed' && styles.groupCompleted
+        )}>
+          <Text className={styles.taskGroupTitle}>
+            {variant === 'overdue' && '❗️ '}
+            {variant === 'due' && '⏰ '}
+            {variant === 'completed' && '✅ '}
+            {title}
+          </Text>
+          <View className={classnames(
+            styles.taskGroupCount,
+            variant === 'overdue' && styles.countOverdue,
+            variant === 'due' && styles.countDue,
+            variant === 'completed' && styles.countCompleted
+          )}>
+            {tasks.length}
+          </View>
+        </View>
+        {tasks.map(task => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            onComplete={() => handleCompleteTask(task.id)}
+            showDate={false}
+          />
+        ))}
+      </View>
+    );
+  };
+
+  const hasAnyTask = filteredTasks.length > 0;
 
   return (
     <ScrollView
@@ -72,9 +144,24 @@ const CalendarPage: React.FC = () => {
         <Text className={styles.dateText}>
           {selectedDateStr} {getDayName(selectedDate)}
         </Text>
-        <Text className={styles.tasksCount}>
-          共 {dayTasks.length} 个任务 · 待完成 {pendingCount} · 已完成 {completedCount}
-        </Text>
+        <View className={styles.taskStatsRow}>
+          {overdueCount > 0 && (
+            <View className={classnames(styles.statBadge, styles.statOverdue)}>
+              <Text className={styles.statBadgeText}>逾期 {overdueCount}</Text>
+            </View>
+          )}
+          {dueCount > 0 && (
+            <View className={classnames(styles.statBadge, styles.statDue)}>
+              <Text className={styles.statBadgeText}>到期 {dueCount}</Text>
+            </View>
+          )}
+          <View className={classnames(styles.statBadge, styles.statPending)}>
+            <Text className={styles.statBadgeText}>待办 {pendingCount}</Text>
+          </View>
+          <View className={classnames(styles.statBadge, styles.statDone)}>
+            <Text className={styles.statBadgeText}>已完成 {completedCount}</Text>
+          </View>
+        </View>
       </View>
 
       <View className={styles.legend}>
@@ -122,7 +209,7 @@ const CalendarPage: React.FC = () => {
           </Button>
         </View>
 
-        {filteredTasks.length === 0 ? (
+        {!hasAnyTask ? (
           <EmptyState
             title="当天没有任务"
             description="点击上方按钮添加一个养护任务吧"
@@ -131,13 +218,12 @@ const CalendarPage: React.FC = () => {
             onAction={handleAddTask}
           />
         ) : (
-          filteredTasks.map(task => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onComplete={() => handleCompleteTask(task.id)}
-            />
-          ))
+          <View>
+            {renderTaskGroup('已逾期', overdueTasks, 'overdue')}
+            {renderTaskGroup('已到期', dueTasks, 'due')}
+            {renderTaskGroup('待处理', pendingTasks, 'pending')}
+            {renderTaskGroup('已完成', completedTasks, 'completed')}
+          </View>
         )}
       </View>
     </ScrollView>
